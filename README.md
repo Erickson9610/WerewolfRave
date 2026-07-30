@@ -27,19 +27,19 @@ Once you unlock a style, you will be able to add it to your Style Sequence list.
 If you also have the LibAddonMenu-2.0 addon installed, you can use the `/wwrui` slash command to edit these settings with a visual GUI.
 Alternatively, you may use the following /wwr slash commands to create, read, update, and delete entries in the Style Sequence.
 
-- `/wwr idtable`
+- Print ID Table (`/wwr idtable`)
     - Prints out the list of every Werewolf Form Skill Style currently in the game, in this order:
     - `<collectibleName>, <collectibleId>, <isCollected>`
-- `/wwr getlist`
+- Print Style Sequence (`/wwr getlist`)
     - Prints out your current Style Sequence list, in this order:
     - `<index>, <name>, <collectibleId>`
-- `/wwr setlist <index> <collectibleId>`
+- Add, Change, or Remove From Style Sequence (`/wwr setlist <index> <collectibleId>`)
     - Used for manipulating the Style Sequence. Handles adding, changing, and removing elements.
-    - `/wwr setlist new <collectibleId>`
+    - Create (`/wwr setlist new <collectibleId>`)
         - Inserts a new element at the end of the list.
-    - `/wwr setlist <index> <collectibleId>`
+    - Update (`/wwr setlist <index> <collectibleId>`)
         - Replaces the value at position `<index>` in the Style Sequence with `<collectibleId>`
-    - `/wwr setlist new nil`
+    - Delete (`/wwr setlist new nil`)
         - Removes the last element of the list.
 
 # Installation
