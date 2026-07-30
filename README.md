@@ -2,7 +2,9 @@
 
 # Features
 
-Werewolf Rave (WWR) is an addon for The Elder Scrolls Online which allows you automatically change your character's Werewolf form fur color.
+Werewolf Rave (WWR) is an addon for The Elder Scrolls Online which automatically equips Werewolf Form Skill Styles depending on the selected activation methods, according to your custom style sequence.
+
+Use this addon to shuffle between your unlocked styles, loop through them in a sequence, give a weighted chance for certain styles to appear, and more!
 
 This addon will automatically search for new Werewolf Form Skill Styles that may be added to the game in future updates, then reference those styles in a list.
 Once you unlock a style, you will be able to add it to your Style Sequence list.
