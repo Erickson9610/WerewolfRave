@@ -25,7 +25,7 @@ Once you unlock a style, you will be able to add it to your Style Sequence list.
 ## Editing the Style Sequence
 
 If you also have the LibAddonMenu-2.0 addon installed, you can use the `/wwrui` slash command to edit these settings with a visual GUI.
-Alternatively, you may use the following /wwr slash commands to create, read, update, and delete entries in the Style Sequence.
+Alternatively, you may use the following `/wwr` slash commands to create, read, update, and delete entries in the Style Sequence.
 
 - Print ID Table (`/wwr idtable`)
     - Prints out the list of every Werewolf Form Skill Style currently in the game, in this order:
