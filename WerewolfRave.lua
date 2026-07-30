@@ -1,6 +1,6 @@
 --[[
     Add-On developed by Erickson9610
-
+    No AI has been used in the development of this addon.
 
     As of Update 50, these Werewolf Form Skill Styles are usable:
     Black: 14773
@@ -14,68 +14,78 @@
     and add them to the list. It will then check to see if you have the style unlocked so it will determine if you can use it.
 ]]
 
-
-WerewolfRave = {}
-WerewolfRave.discoveredStyleList = {} -- the list of discovered Werewolf Form styles, used for display of all possible styles to choose from, equippable or not
-WerewolfRave.chosenStyleList = {} -- the list of chosen Werewolf Form styles, used for randomizing and sequencing. These are the styles that the user wants to use and can equip
-WerewolfRave.allowChangeWhenAuto = true -- enables or disables the automatic swap of skill styles
-WerewolfRave.enabledInCombat = false -- enables or disables the automatic swap of skill styles while in combat
-WerewolfRave.frequency = 3 -- the frequency of the automatic swap while not in combat
-WerewolfRave.frequencyInCombat = 10 -- the frequency of the automatic swap while in combat
-WerewolfRave.allowDisableStyle = false -- if true, you have a chance of re-equipping the same style, which disables it and shows your morph fur color instead
-WerewolfRave.randomized = true -- if true, the next style is randomly picked from the chosenStyleList. Otherwise, it loops through the chosenStyleList in a sequence
-WerewolfRave.currentStyleIndex = 0 -- an index into chosenStyleList which corresponds to the current style that is equipped
-WerewolfRave.currentStyleId = 0 -- the CollectibleID for the current skill style equipped
-WerewolfRave.allowChangeWhenTF = false -- changes your fur style whenever you revert form
+WerewolfRave = WerewolfRave or {}
+local WWR = WerewolfRave or {}
+WWR.discoveredStyleList = {} -- the list of discovered Werewolf Form styles, used for display of all possible styles to choose from, equippable or not
+WWR.chosenStyleList = {} -- the list of chosen Werewolf Form styles, used for randomizing and sequencing. These are the styles that the user wants to use and can equip
+WWR.allowChangeWhenAuto = true -- enables or disables the automatic swap of skill styles
+WWR.enabledInCombat = false -- enables or disables the automatic swap of skill styles while in combat
+WWR.frequency = 3 -- the frequency of the automatic swap while not in combat
+WWR.frequencyInCombat = 10 -- the frequency of the automatic swap while in combat
+WWR.allowDisableStyle = false -- if true, you have a chance of re-equipping the same style, which disables it and shows your morph fur color instead
+WWR.randomized = true -- if true, the next style is randomly picked from the chosenStyleList. Otherwise, it loops through the chosenStyleList in a sequence
+WWR.currentStyleIndex = 0 -- an index into chosenStyleList which corresponds to the current style that is equipped
+WWR.currentStyleId = 0 -- the CollectibleID for the current skill style equipped
+WWR.allowChangeWhenTF = false -- changes your fur style whenever you revert form
 
 -- constants
-WerewolfRave.NAME = "WerewolfRave"
-WerewolfRave.FREQUENCY_LOWER = 2 -- the lower bound for out of combat frequency (WerewolfRave.frequency)
-WerewolfRave.FREQUENCY_UPPER = 60 -- the upper bound for out of combat frequency (WerewolfRave.frequency)
-WerewolfRave.FREQUENCY_COMBAT_LOWER = 2 -- the lower bound for in-combat frequency (WerewolfRave.frequencyInCombat)
-WerewolfRave.FREQUENCY_COMBAT_UPPER = 60 -- the upper bound for in-combat frequency (WerewolfRave.frequencyInCombat)
-WerewolfRave.VAR_VERSION = 1 -- the internal version of the saved variables. I will increment this if I restructure the data stored by this addon.
+WWR.NAME = "WerewolfRave"
+WWR.FREQUENCY_LOWER = 2 -- the lower bound for out of combat frequency (WerewolfRave.frequency)
+WWR.FREQUENCY_UPPER = 60 -- the upper bound for out of combat frequency (WerewolfRave.frequency)
+WWR.FREQUENCY_COMBAT_LOWER = 2 -- the lower bound for in-combat frequency (WerewolfRave.frequencyInCombat)
+WWR.FREQUENCY_COMBAT_UPPER = 60 -- the upper bound for in-combat frequency (WerewolfRave.frequencyInCombat)
+WWR.VAR_VERSION = 2 -- the internal version of the saved variables. I will increment this if I restructure the data stored by this addon.
 
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES = {} -- a table that matches the name of the Werewolf Form skill styles to the game language
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["en"] = "Werewolf Form"
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["fr"] = "Forme de loup%-garou" -- hyphens are special characters that need to be escaped
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["de"] = "Werwolf" -- skill styles for this Ultimate can be written as either "Werwolfgestalt" or "Werwolfverwandlung"
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["jp"] = "ウェアウルフ形態"
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["ru"] = "Обличье вервольфа"
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["es"] = "Forma lupina"
-WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES["zh"] = "狼人形态"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES = {} -- a table that matches the name of the Werewolf Form skill styles to the game language
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["en"] = "Werewolf Form"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["fr"] = "Forme de loup%-garou" -- hyphens are special characters that need to be escaped
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["de"] = "Werwolf" -- skill styles for this Ultimate can be written as either "Werwolfgestalt" or "Werwolfverwandlung"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["jp"] = "ウェアウルフ形態"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["ru"] = "Обличье вервольфа"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["es"] = "Forma lupina"
+WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["zh"] = "狼人形态"
 
-function WerewolfRave.CreateAndSaveDefaultList() -- Creates and returns the default style list for first-time users, saving it in the process
+
+
+
+
+
+
+
+
+
+
+function WWR.CreateAndSaveDefaultList() -- Creates and returns the default style list for first-time users, saving it in the process
     local defaultStyleList = {}
-    WerewolfRave.savedVars.chosenStyleList = {}
+    WWR.savedVars.chosenStyleList = {}
 
-    for i = 1, #WerewolfRave.discoveredStyleList do
-        if (IsCollectibleUnlocked(WerewolfRave.discoveredStyleList[i])) then
-            defaultStyleList[#defaultStyleList + 1] = WerewolfRave.discoveredStyleList[i]
-            WerewolfRave.savedVars.chosenStyleList[#WerewolfRave.savedVars.chosenStyleList + 1] = WerewolfRave.discoveredStyleList[i]
+    for i = 1, #WWR.discoveredStyleList do
+        if (IsCollectibleUnlocked(WWR.discoveredStyleList[i])) then
+            defaultStyleList[#defaultStyleList + 1] = WWR.discoveredStyleList[i]
+            WWR.savedVars.chosenStyleList[#WWR.savedVars.chosenStyleList + 1] = WWR.discoveredStyleList[i]
         end
     end
     return defaultStyleList
 end
 
-function WerewolfRave.ResetChosenList() -- Resets the chosenStyleList to have one of every unlocked style
+function WWR.ResetChosenList() -- Resets the chosenStyleList to have one of every unlocked style
     -- This function should only run after BuildStyleList populates discoveredStyleList!
-    WerewolfRave.chosenStyleList = {}
-    WerewolfRave.savedVars.chosenStyleList = {}
+    WWR.chosenStyleList = {}
+    WWR.savedVars.chosenStyleList = {}
     
-    for i = 1, #WerewolfRave.discoveredStyleList do
-        if (IsCollectibleUnlocked(WerewolfRave.discoveredStyleList[i])) then
-            WerewolfRave.chosenStyleList[#WerewolfRave.chosenStyleList + 1] = WerewolfRave.discoveredStyleList[i]
-            WerewolfRave.savedVars.chosenStyleList[#WerewolfRave.savedVars.chosenStyleList + 1] = WerewolfRave.discoveredStyleList[i] -- save changes
+    for i = 1, #WWR.discoveredStyleList do
+        if (IsCollectibleUnlocked(WWR.discoveredStyleList[i])) then
+            WWR.chosenStyleList[#WWR.chosenStyleList + 1] = WWR.discoveredStyleList[i]
+            WWR.savedVars.chosenStyleList[#WWR.savedVars.chosenStyleList + 1] = WWR.discoveredStyleList[i] -- save changes
         end
     end
 end
 
-function WerewolfRave.BuildStyleList() -- Builds the discoveredStyleList based on which styles are discovered, then populates the chosenStyleList.
-    WerewolfRave.discoveredStyleList = {}
+function WWR.BuildStyleList() -- Builds the discoveredStyleList based on which styles are discovered, then populates the chosenStyleList.
+    WWR.discoveredStyleList = {}
 
     local language = ZoGetOfficialGameLanguageDescriptor()
-    local targetString = WerewolfRave.SKILLSTYLE_LANGUAGE_NAME_MATCHES[language]
+    local targetString = WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES[language]
 
     --[[
         Search through GetCollectibleIdFromType(30, x) and add every collectibleId
@@ -93,8 +103,7 @@ function WerewolfRave.BuildStyleList() -- Builds the discoveredStyleList based o
         local currentCollectibleId = GetCollectibleIdFromType(30, i)
         if (string.find(GetCollectibleName(currentCollectibleId), targetString)) then
             -- add found style to discovered list
-            --WerewolfRave.discoveredStyleCount = WerewolfRave.discoveredStyleCount + 1
-            WerewolfRave.discoveredStyleList[#WerewolfRave.discoveredStyleList + 1] = currentCollectibleId
+            WWR.discoveredStyleList[#WWR.discoveredStyleList + 1] = currentCollectibleId
         end
     end
     --[[Again, all that the above does is try to find any and all Skill Styles that apply to Werewolf Transformation.
@@ -103,151 +112,151 @@ function WerewolfRave.BuildStyleList() -- Builds the discoveredStyleList based o
         This will break if ZOS ever makes a Werewolf Transformation Skill Style that has a typo or a different naming convention! I really need a better way of linking these!]]
 end
 
-function WerewolfRave.UpdateFrequency() -- Determines whether the player is in combat, then registers the refresh to happen according to the corresponding frequency value.
-    EVENT_MANAGER:UnregisterForUpdate(WerewolfRave.NAME .. "Loop")
+function WWR.UpdateFrequency() -- Determines whether the player is in combat, then registers the refresh to happen according to the corresponding frequency value.
+    EVENT_MANAGER:UnregisterForUpdate(WWR.NAME .. "Loop")
     if (IsUnitInCombat("player")) then
         -- use in-combat frequency
-        EVENT_MANAGER:RegisterForUpdate(WerewolfRave.NAME .. "Loop", WerewolfRave.frequencyInCombat * 1000, function() WerewolfRave.ChangeStyleWhenAuto() end)
+        EVENT_MANAGER:RegisterForUpdate(WWR.NAME .. "Loop", WWR.frequencyInCombat * 1000, function() WWR.ChangeStyleWhenAuto() end)
     else
         -- use out of combat frequency
-        EVENT_MANAGER:RegisterForUpdate(WerewolfRave.NAME .. "Loop", WerewolfRave.frequency * 1000, function() WerewolfRave.ChangeStyleWhenAuto() end)
+        EVENT_MANAGER:RegisterForUpdate(WWR.NAME .. "Loop", WWR.frequency * 1000, function() WWR.ChangeStyleWhenAuto() end)
     end
 end
 
-function WerewolfRave.ToggleAuto(printOutput) -- Toggles the automatic mode on or off
-    if (WerewolfRave.allowChangeWhenAuto) then -- disable wwr
-        WerewolfRave.allowChangeWhenAuto = false
+function WWR.ToggleAuto(printOutput) -- Toggles the automatic mode on or off
+    if (WWR.allowChangeWhenAuto) then -- disable wwr
+        WWR.allowChangeWhenAuto = false
         if (printOutput) then d("[WWR] Automatic style change disabled!") end
     else -- enable wwr
-        WerewolfRave.allowChangeWhenAuto = true
-        WerewolfRave.UpdateFrequency()
+        WWR.allowChangeWhenAuto = true
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Automatic style change enabled!") end
     end
-    WerewolfRave.savedVars.allowChangeWhenAuto = WerewolfRave.allowChangeWhenAuto -- save changes
+    WWR.savedVars.allowChangeWhenAuto = WWR.allowChangeWhenAuto -- save changes
 end
 
-function WerewolfRave.ToggleTF(printOutput) -- Toggles transformation as a trigger for changing styles
-    if (WerewolfRave.allowChangeWhenTF) then -- toggle tf off
-        WerewolfRave.allowChangeWhenTF = false
+function WWR.ToggleTF(printOutput) -- Toggles transformation as a trigger for changing styles
+    if (WWR.allowChangeWhenTF) then -- toggle tf off
+        WWR.allowChangeWhenTF = false
         if (printOutput) then d("[WWR] Style change on transformation disabled!") end
     else -- toggle tf on
-        WerewolfRave.allowChangeWhenTF = true
+        WWR.allowChangeWhenTF = true
         if (printOutput) then d("[WWR] Style change on transformation enabled!") end
     end
-    WerewolfRave.savedVars.allowChangeWhenTF = WerewolfRave.allowChangeWhenTF -- save changes
+    WWR.savedVars.allowChangeWhenTF = WWR.allowChangeWhenTF -- save changes
 end
 
-function WerewolfRave.ToggleCombat(printOutput) -- Toggles whether styles can be changed in combat
-    if (WerewolfRave.enabledInCombat) then -- toggle in-combat off
-        WerewolfRave.enabledInCombat = false
+function WWR.ToggleCombat(printOutput) -- Toggles whether styles can be changed in combat
+    if (WWR.enabledInCombat) then -- toggle in-combat off
+        WWR.enabledInCombat = false
         if (printOutput) then d("[WWR] Style change in combat disabled!") end
     else -- toggle in-combat on
-        WerewolfRave.enabledInCombat = true
-        WerewolfRave.UpdateFrequency()
+        WWR.enabledInCombat = true
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Style change in combat enabled!") end
     end
-    WerewolfRave.savedVars.enabledInCombat = WerewolfRave.enabledInCombat -- save changes
+    WWR.savedVars.enabledInCombat = WWR.enabledInCombat -- save changes
 end
 
-function WerewolfRave.ToggleRandomOrSequential(printOutput) -- Toggles whether the next style picked is random or in sequence
-    if (WerewolfRave.randomized) then -- toggle random order off
-        WerewolfRave.randomized = false
-        WerewolfRave.UpdateFrequency()
+function WWR.ToggleRandomOrSequential(printOutput) -- Toggles whether the next style picked is random or in sequence
+    if (WWR.randomized) then -- toggle random order off
+        WWR.randomized = false
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Style order is now sequential!") end
     else -- toggle random order on
-        WerewolfRave.randomized = true
-        WerewolfRave.UpdateFrequency()
+        WWR.randomized = true
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Style order is now randomized!") end
     end
-    WerewolfRave.savedVars.randomized = WerewolfRave.randomized -- save changes
+    WWR.savedVars.randomized = WWR.randomized -- save changes
 end
 
-function WerewolfRave.SetFrequency(printOutput, seconds) -- Sets the out of combat frequency of the automatic mode
+function WWR.SetFrequency(printOutput, seconds) -- Sets the out of combat frequency of the automatic mode
     -- convert seconds to number
     numSeconds = tonumber(seconds)
     if(numSeconds == nil) then
         if (printOutput) then d("[WWR] Invalid number of seconds for frequency command.") end
     else
         -- bounds check
-        if (numSeconds < WerewolfRave.FREQUENCY_LOWER) then
-            numSeconds = WerewolfRave.FREQUENCY_LOWER
-        elseif (numSeconds > WerewolfRave.FREQUENCY_UPPER) then
-            numSeconds = WerewolfRave.FREQUENCY_UPPER
+        if (numSeconds < WWR.FREQUENCY_LOWER) then
+            numSeconds = WWR.FREQUENCY_LOWER
+        elseif (numSeconds > WWR.FREQUENCY_UPPER) then
+            numSeconds = WWR.FREQUENCY_UPPER
         end
 
-        WerewolfRave.frequency = numSeconds
-        WerewolfRave.UpdateFrequency()
-        if (printOutput) then d("[WWR] Out of combat frequency set to " .. WerewolfRave.frequency) end
-        WerewolfRave.savedVars.frequency = WerewolfRave.frequency -- save changes
+        WWR.frequency = numSeconds
+        WWR.UpdateFrequency()
+        if (printOutput) then d("[WWR] Out of combat frequency set to " .. WWR.frequency) end
+        WWR.savedVars.frequency = WWR.frequency -- save changes
     end
 end
 
-function WerewolfRave.SetCombatFrequency(printOutput, seconds) -- Sets the in-combat frequency of the automatic mode
+function WWR.SetCombatFrequency(printOutput, seconds) -- Sets the in-combat frequency of the automatic mode
     -- convert seconds to number
     numSeconds = tonumber(seconds)
     if(numSeconds == nil) then
         if (printOutput) then d("[WWR] Invalid number of seconds for cfrequency command.") end
     else
         -- bounds check
-        if (numSeconds < WerewolfRave.FREQUENCY_COMBAT_LOWER) then
-            numSeconds = WerewolfRave.FREQUENCY_COMBAT_LOWER
-        elseif (numSeconds > WerewolfRave.FREQUENCY_COMBAT_UPPER) then
-            numSeconds = WerewolfRave.FREQUENCY_COMBAT_UPPER
+        if (numSeconds < WWR.FREQUENCY_COMBAT_LOWER) then
+            numSeconds = WWR.FREQUENCY_COMBAT_LOWER
+        elseif (numSeconds > WWR.FREQUENCY_COMBAT_UPPER) then
+            numSeconds = WWR.FREQUENCY_COMBAT_UPPER
         end
 
-        WerewolfRave.frequencyInCombat = numSeconds
-        WerewolfRave.UpdateFrequency()
-        if (printOutput) then d("[WWR] In combat frequency set to " .. WerewolfRave.frequencyInCombat) end
-        WerewolfRave.savedVars.frequencyInCombat = WerewolfRave.frequencyInCombat -- save changes
+        WWR.frequencyInCombat = numSeconds
+        WWR.UpdateFrequency()
+        if (printOutput) then d("[WWR] In combat frequency set to " .. WWR.frequencyInCombat) end
+        WWR.savedVars.frequencyInCombat = WWR.frequencyInCombat -- save changes
     end
 end
 
-function WerewolfRave.ToggleDuplicates(printOutput) -- Toggles whether styles can be toggled off by re-equipping them
-    if (WerewolfRave.allowDisableStyle) then -- toggle duplicates off
-        WerewolfRave.allowDisableStyle = false
-        WerewolfRave.UpdateFrequency()
+function WWR.ToggleDuplicates(printOutput) -- Toggles whether styles can be toggled off by re-equipping them
+    if (WWR.allowDisableStyle) then -- toggle duplicates off
+        WWR.allowDisableStyle = false
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Duplicates are no longer allowed!") end
     else -- toggle duplicates on
-        WerewolfRave.allowDisableStyle = true
-        WerewolfRave.UpdateFrequency()
+        WWR.allowDisableStyle = true
+        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Duplicates are now allowed!") end
     end
-    WerewolfRave.savedVars.allowDisableStyle = WerewolfRave.allowDisableStyle -- save changes
+    WWR.savedVars.allowDisableStyle = WWR.allowDisableStyle -- save changes
 end
 
-function WerewolfRave.SetList(printOutput, listIndex, styleId) -- Modifies the element at a specific index, for Create, Update, and Delete functionality
+function WWR.SetList(printOutput, listIndex, styleId) -- Modifies the element at a specific index, for Create, Update, and Delete functionality
     local indexNum = nil
     if (listIndex == "new") then
         if (styleId == "nil") then -- "new nil" to remove last element
-            if (#WerewolfRave.chosenStyleList > 0) then
-                WerewolfRave.chosenStyleList[#WerewolfRave.chosenStyleList] = nil
-                WerewolfRave.savedVars.chosenStyleList[#WerewolfRave.savedVars.chosenStyleList] = nil -- save remove element change
-                if (printOutput) then d("[WWR] The style list size has been reduced to " .. #WerewolfRave.chosenStyleList) end
+            if (#WWR.chosenStyleList > 0) then
+                WWR.chosenStyleList[#WWR.chosenStyleList] = nil
+                WWR.savedVars.chosenStyleList[#WWR.savedVars.chosenStyleList] = nil -- save remove element change
+                if (printOutput) then d("[WWR] The style list size has been reduced to " .. #WWR.chosenStyleList) end
             else
                 if (printOutput) then d("[WWR] No more entries to remove from the style list!") end
             end
             return
         else
-            indexNum = #WerewolfRave.chosenStyleList+1
+            indexNum = #WWR.chosenStyleList+1
         end
     else
         indexNum = tonumber(listIndex)
     end
     if (indexNum) then -- if index is a number
         if (indexNum < 1) then indexNum = 1 end -- lower bounds check, cannot be less than 1
-        if (indexNum > #WerewolfRave.chosenStyleList+1) then indexNum = #WerewolfRave.chosenStyleList+1 end -- upper bounds check, cannot create gaps in list
+        if (indexNum > #WWR.chosenStyleList+1) then indexNum = #WWR.chosenStyleList+1 end -- upper bounds check, cannot create gaps in list
 
         local styleNum = tonumber(styleId)
         if (styleNum) then -- if collectible ID is a number
             local isValidStyle = false
-            for i = 1, #WerewolfRave.discoveredStyleList do -- test to see if this style is in the discovered list
-                if (styleNum == WerewolfRave.discoveredStyleList[i]) then
+            for i = 1, #WWR.discoveredStyleList do -- test to see if this style is in the discovered list
+                if (styleNum == WWR.discoveredStyleList[i]) then
                     if (IsCollectibleUnlocked(styleNum)) then isValidStyle = true end -- we only want to add unlocked styles to the chosen list
                 end
             end
             if (isValidStyle) then -- if this style is valid, then add it to the list at the specified index
-                WerewolfRave.chosenStyleList[indexNum] = styleNum
-                WerewolfRave.savedVars.chosenStyleList[indexNum] = styleNum -- save add/replace element change
+                WWR.chosenStyleList[indexNum] = styleNum
+                WWR.savedVars.chosenStyleList[indexNum] = styleNum -- save add/replace element change
                 if (printOutput) then d('[WWR] Set the style "' .. GetCollectibleName(styleNum) .. '" in index position ' .. tostring(indexNum)) end
             else
                 if (printOutput) then d("[WWR] Error: Locked or Invalid Style!") end
@@ -287,88 +296,88 @@ function WerewolfRaveSlashCommand(parameter) -- Handles the slash commands for a
     if (parameterList[1] == nil or parameterList[1] == "" or parameterList[1] == "help") then
         d("=== Werewolf Rave (WWR) Commands ===")
         if (LibAddonMenu2) then d("/wwrui -> Opens the LibAddonMenu-2.0 panel for modifying these settings.") end
-        d("/wwr auto -> Toggles whether Werewolf Rave automatically changes your style while transformed. Currently " .. tostring(WerewolfRave.allowChangeWhenAuto))
-        d("/wwr tf -> Toggles whether Werewolf Rave changes your style each time you revert form. Currently " .. tostring(WerewolfRave.allowChangeWhenTF))
-        d("/wwr combat -> Toggles WWR to be used while in combat. Currently " .. tostring(WerewolfRave.enabledInCombat))
-        d("/wwr random -> Toggles WWR to randomize the style order. Currently " .. tostring(WerewolfRave.randomized))
-        d("/wwr duplicates -> Allows WWR to toggle off the current style, showing your morph's fur color. Currently " .. tostring(WerewolfRave.allowDisableStyle))
+        d("/wwr auto -> Toggles whether Werewolf Rave automatically changes your style while transformed. Currently " .. tostring(WWR.allowChangeWhenAuto))
+        d("/wwr tf -> Toggles whether Werewolf Rave changes your style each time you revert form. Currently " .. tostring(WWR.allowChangeWhenTF))
+        d("/wwr combat -> Toggles WWR to be used while in combat. Currently " .. tostring(WWR.enabledInCombat))
+        d("/wwr random -> Toggles WWR to randomize the style order. Currently " .. tostring(WWR.randomized))
+        d("/wwr duplicates -> Allows WWR to toggle off the current style, showing your morph's fur color. Currently " .. tostring(WWR.allowDisableStyle))
         d('/wwr setlist <index> <collectibleID> -> Manually edit the style sequence. Index can be [1, listSize+1] or "new" for new. CollectibleID corresponds to the ID of the style for that sequence position. Use "new nil" to remove the last element.')
         d("/wwr getlist -> Print the style sequence. Edit this list with /wwr setlist!")
         d("/wwr resetlist -> Resets the style sequence to the default setting.")
         d("/wwr idtable -> Print the list of unique Werewolf Form styles, their IDs, and whether you've unlocked them. Reference this when using /wwr setlist!")
-        d("/wwr frequency <seconds> -> Sets the number of seconds between automatic style changes. Currently " .. tostring(WerewolfRave.frequency))
-        d("/wwr cfrequency <seconds> -> Sets the number of seconds between automatic style changes while in combat. Currently " .. tostring(WerewolfRave.frequencyInCombat))  
+        d("/wwr frequency <seconds> -> Sets the number of seconds between automatic style changes. Currently " .. tostring(WWR.frequency))
+        d("/wwr cfrequency <seconds> -> Sets the number of seconds between automatic style changes while in combat. Currently " .. tostring(WWR.frequencyInCombat))  
     elseif (parameterList[1] == "auto") then -- /wwr toggle
-        WerewolfRave.ToggleAuto(true)
+        WWR.ToggleAuto(true)
     elseif (parameterList[1] == "tf") then -- /wwr tf
-        WerewolfRave.ToggleTF(true)
+        WWR.ToggleTF(true)
     elseif (parameterList[1] == "combat") then -- /wwr combat
-        WerewolfRave.ToggleCombat(true)
+        WWR.ToggleCombat(true)
     elseif (parameterList[1] == "random") then -- /wwr random
-        WerewolfRave.ToggleRandomOrSequential(true)
+        WWR.ToggleRandomOrSequential(true)
     elseif (parameterList[1] == "frequency") then -- /wwr frequency <seconds>
-        WerewolfRave.SetFrequency(true, parameterList[2])
+        WWR.SetFrequency(true, parameterList[2])
     elseif (parameterList[1] == "cfrequency") then -- /wwr cfrequency <seconds>
-        WerewolfRave.SetCombatFrequency(true, parameterList[2])
+        WWR.SetCombatFrequency(true, parameterList[2])
     elseif (parameterList[1] == "duplicates") then -- /wwr duplicates
-        WerewolfRave.ToggleDuplicates(true)
+        WWR.ToggleDuplicates(true)
     elseif (parameterList[1] == "setlist") then -- /wwr setlist <index> <collectibleId>
-        WerewolfRave.SetList(true, parameterList[2], parameterList[3])
+        WWR.SetList(true, parameterList[2], parameterList[3])
     elseif (parameterList[1] == "getlist") then -- /wwr getlist
         d("=== Werewolf Rave Sequence List ===")
-        for i = 1, #WerewolfRave.chosenStyleList do
+        for i = 1, #WWR.chosenStyleList do
             -- print each line
-            d('[' .. i .. '] = "' .. GetCollectibleName(WerewolfRave.chosenStyleList[i]) .. '", ID: ' .. WerewolfRave.chosenStyleList[i])
+            d('[' .. i .. '] = "' .. GetCollectibleName(WWR.chosenStyleList[i]) .. '", ID: ' .. WWR.chosenStyleList[i])
         end
     elseif (parameterList[1] == "idtable") then -- /wwr idtable
         d("=== Werewolf Transformation Skill Style Reference Table ===")
-        for i = 1, #WerewolfRave.discoveredStyleList do
-            local currentStyle = WerewolfRave.discoveredStyleList[i]
+        for i = 1, #WWR.discoveredStyleList do
+            local currentStyle = WWR.discoveredStyleList[i]
             d('"' .. GetCollectibleName(currentStyle) .. '", ID: ' .. tostring(currentStyle) .. ', Collected: ' .. tostring(IsCollectibleUnlocked(currentStyle)))
         end
     elseif (parameterList[1] == "resetlist") then -- /wwr resetlist
-        WerewolfRave.ResetChosenList()
+        WWR.ResetChosenList()
         d("[WWR] Reset the style list!")
     else
         d('[WWR] Invalid /wwr command. Type "/wwr help" for help.')
     end
 end
 
-function WerewolfRave.EquipNextStyle() -- Changes the equipped Skill Style according to the sequence type. Used by ChangeStyleWhenAuto() and ChangeStyleWhenTransforming()
+function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to the sequence type. Used by ChangeStyleWhenAuto() and ChangeStyleWhenTransforming()
     -- determine the selection order
-    if (WerewolfRave.randomized == true) then
+    if (WWR.randomized == true) then
         -- randomized 
 
-        if (WerewolfRave.allowDisableStyle == true) then
+        if (WWR.allowDisableStyle == true) then
             -- if we can toggle off styles
-            local nextIndex = math.random(1, #WerewolfRave.chosenStyleList)
+            local nextIndex = math.random(1, #WWR.chosenStyleList)
             
-            UseCollectible(WerewolfRave.chosenStyleList[nextIndex]) -- equip style
+            UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip style
 
-            WerewolfRave.currentStyleId = WerewolfRave.chosenStyleList[nextIndex]
-            WerewolfRave.currentStyleIndex = nextIndex
+            WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
+            WWR.currentStyleIndex = nextIndex
         else
             -- if we cannot toggle off styles
 
             -- can only run this path if we have 2 or more styles selected
-            if (#WerewolfRave.chosenStyleList > 1) then
+            if (#WWR.chosenStyleList > 1) then
             -- set the style to the last, unreachable element if we get the element we're currently using
             --[[    Presume we have a chosenStyleList with indices {1, 2, 3}. We can only roll 1 or 2.
                     If currentStyleIndex is 1 and we roll 1, change the roll to 3
                     If currentStyleIndex is 1 and we roll 2, do nothing
                     If currentStyleIndex is 3, we can roll 1 or 2 with no conflict.
                     This gives us an equal probability for all styles but the currently equipped style. ]]
-                local nextIndex = math.random(1, #WerewolfRave.chosenStyleList - 1)
-                if (nextIndex == WerewolfRave.currentStyleIndex) then
-                    nextIndex = #WerewolfRave.chosenStyleList
+                local nextIndex = math.random(1, #WWR.chosenStyleList - 1)
+                if (nextIndex == WWR.currentStyleIndex) then
+                    nextIndex = #WWR.chosenStyleList
                 end
                 -- if the next style is not a duplicate, equip it
-                if (WerewolfRave.currentStyleId ~= WerewolfRave.chosenStyleList[nextIndex]) then
-                    UseCollectible(WerewolfRave.chosenStyleList[nextIndex])
+                if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
+                    UseCollectible(WWR.chosenStyleList[nextIndex])
                 end
 
-                WerewolfRave.currentStyleId = WerewolfRave.chosenStyleList[nextIndex]
-                WerewolfRave.currentStyleIndex = nextIndex
+                WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
+                WWR.currentStyleIndex = nextIndex
             end
         end
     else
@@ -380,46 +389,46 @@ function WerewolfRave.EquipNextStyle() -- Changes the equipped Skill Style accor
                 If currentStyleIndex is 2, nextIndex will be 3
                 If currentStyleIndex is 3, nextIndex will be 1
                 ]]
-        local nextIndex = (WerewolfRave.currentStyleIndex % #WerewolfRave.chosenStyleList) + 1
+        local nextIndex = (WWR.currentStyleIndex % #WWR.chosenStyleList) + 1
         -- if the next style in the sequence is the same style and duplicates are not allowed, do not set the style
-        if (WerewolfRave.currentStyleId ~= WerewolfRave.chosenStyleList[nextIndex]) then
-            UseCollectible(WerewolfRave.chosenStyleList[nextIndex])
+        if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
+            UseCollectible(WWR.chosenStyleList[nextIndex])
         end
 
-        WerewolfRave.currentStyleId = WerewolfRave.chosenStyleList[nextIndex]
-        WerewolfRave.currentStyleIndex = nextIndex
+        WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
+        WWR.currentStyleIndex = nextIndex
     end
 end
 
-function WerewolfRave.ChangeStyleWhenAuto() -- Changes the active Werewolf Form Skill Style based on the shuffle type and the chosenStyleList.
+function WWR.ChangeStyleWhenAuto() -- Changes the active Werewolf Form Skill Style based on the shuffle type and the chosenStyleList.
 
     -- if player is not in Werewolf form, return
     if (IsPlayerInWerewolfForm() == false) then return end
 
     -- if werewolf rave is disabled, return
-    if (WerewolfRave.allowChangeWhenAuto == false) then return end
+    if (WWR.allowChangeWhenAuto == false) then return end
 
     -- if there are no styles selected, return
-    if (#WerewolfRave.chosenStyleList <= 0) then return end
+    if (#WWR.chosenStyleList <= 0) then return end
 
     -- if in combat and that is not allowed, return
-    if (IsUnitInCombat("player") and WerewolfRave.enabledInCombat == false) then return end
+    if (IsUnitInCombat("player") and WWR.enabledInCombat == false) then return end
 
     -- update the frequency, which selects the correct frequency depending on combat state
-    WerewolfRave.UpdateFrequency()
+    WWR.UpdateFrequency()
 
-    WerewolfRave.EquipNextStyle()
+    WWR.EquipNextStyle()
 end
 
-function WerewolfRave.ChangeStyleWhenTransforming()
+function WWR.ChangeStyleWhenTransforming()
     -- if this functionality is not enabled, return
-    if (WerewolfRave.allowChangeWhenTF == false) then return end
+    if (WWR.allowChangeWhenTF == false) then return end
 
     -- if there are no styles selected, return
-    if (#WerewolfRave.chosenStyleList <= 0) then return end
+    if (#WWR.chosenStyleList <= 0) then return end
 
     -- if in combat and that is not allowed, return
-    if (IsUnitInCombat("player") and WerewolfRave.enabledInCombat == false) then return end
+    if (IsUnitInCombat("player") and WWR.enabledInCombat == false) then return end
 
     if (IsPlayerInWerewolfForm() == false) then --[[We can only change the fur color during the revert form animation, since the transform animation conflicts with the style equip.
                                                     For some reason, the EVENT_WEREWOLF_STATE_CHANGED event fires TWICE when transforming (once when the ultimate is cast, once when the animation finishes)
@@ -429,11 +438,11 @@ function WerewolfRave.ChangeStyleWhenTransforming()
                                                     The player is considered to be in the opposite form the moment they activate the transformation,
                                                     e.g. when reverting form, the player is considered to be in human form before the de-transformation animation finishes
                                                     This is why we're checking for the player to NOT be in Werewolf form for the revert form animation! ]]
-        WerewolfRave.EquipNextStyle() -- equip a style
+        WWR.EquipNextStyle() -- equip a style
     end
 end
 
-function WerewolfRave.LoadSettings() -- set the default values and read from the saved variables table
+function WWR.LoadSettings() -- set the default values and read from the saved variables table
     local defaultVars = {
         chosenStyleList = {},
         allowChangeWhenAuto = true,
@@ -444,36 +453,35 @@ function WerewolfRave.LoadSettings() -- set the default values and read from the
         randomized = true,
         allowChangeWhenTF = false
     }
-    WerewolfRave.savedVars = ZO_SavedVars:NewAccountWide("WerewolfRaveVars", WerewolfRave.VAR_VERSION, nil, defaultVars)
+    WWR.savedVars = ZO_SavedVars:NewAccountWide("WerewolfRaveVars", WWR.VAR_VERSION, GetWorldName(), defaultVars, nil, nil)
 
     -- if the saved list size is 0, reset the list to create the default list
-    if (#WerewolfRave.savedVars.chosenStyleList <= 0) then
-        WerewolfRave.chosenStyleList = WerewolfRave.CreateAndSaveDefaultList() -- this should be the default list for first-time users, but that must be generated first
+    if (#WWR.savedVars.chosenStyleList <= 0) then
+        WWR.chosenStyleList = WWR.CreateAndSaveDefaultList() -- this should be the default list for first-time users, but that must be generated first
     end
     -- load the saved list
-    for i = 1, #WerewolfRave.savedVars.chosenStyleList do
-        WerewolfRave.chosenStyleList[i] = WerewolfRave.savedVars.chosenStyleList[i]
+    for i = 1, #WWR.savedVars.chosenStyleList do
+        WWR.chosenStyleList[i] = WWR.savedVars.chosenStyleList[i]
     end
-    WerewolfRave.allowChangeWhenAuto = WerewolfRave.savedVars.allowChangeWhenAuto
-    WerewolfRave.enabledInCombat = WerewolfRave.savedVars.enabledInCombat
-    WerewolfRave.frequency = WerewolfRave.savedVars.frequency
-    WerewolfRave.frequencyInCombat = WerewolfRave.savedVars.frequencyInCombat
-    WerewolfRave.allowDisableStyle = WerewolfRave.savedVars.allowDisableStyle
-    WerewolfRave.randomized = WerewolfRave.savedVars.randomized
-    WerewolfRave.allowChangeWhenTF = WerewolfRave.savedVars.allowChangeWhenTF
+    WWR.allowChangeWhenAuto = WWR.savedVars.allowChangeWhenAuto
+    WWR.enabledInCombat = WWR.savedVars.enabledInCombat
+    WWR.frequency = WWR.savedVars.frequency
+    WWR.frequencyInCombat = WWR.savedVars.frequencyInCombat
+    WWR.allowDisableStyle = WWR.savedVars.allowDisableStyle
+    WWR.randomized = WWR.savedVars.randomized
+    WWR.allowChangeWhenTF = WWR.savedVars.allowChangeWhenTF
 end
 
-function WerewolfRave.OnAddOnLoaded(event, name) -- Initializes the addon by building the style list and updating the frequency to start the refresh
-    if (name ~= WerewolfRave.NAME) then return end
-    EVENT_MANAGER:UnregisterForEvent(WerewolfRave.NAME, EVENT_ADD_ON_LOADED)
-    WerewolfRave.BuildStyleList() -- build the discovered list, aka id table of all possible styles
-    WerewolfRave.LoadSettings() -- load the settings after building the discovered list
-    WerewolfRave.UpdateFrequency()
+function WWR.OnAddOnLoaded(event, name) -- Initializes the addon by building the style list and updating the frequency to start the refresh
+    if (name ~= WWR.NAME) then return end
+    EVENT_MANAGER:UnregisterForEvent(WWR.NAME, EVENT_ADD_ON_LOADED)
+    WWR.BuildStyleList() -- build the discovered list, aka id table of all possible styles
+    WWR.LoadSettings() -- load the settings after building the discovered list
+    WWR.UpdateFrequency()
 
-    WerewolfRaveMenu.Initialize()
+    WWR.InitializeMenu()
+    SLASH_COMMANDS["/wwr"] = WerewolfRaveSlashCommand
+    EVENT_MANAGER:RegisterForEvent(WWR.NAME, EVENT_WEREWOLF_STATE_CHANGED, WWR.ChangeStyleWhenTransforming)
 end
 
-SLASH_COMMANDS["/wwr"] = WerewolfRaveSlashCommand
-
-EVENT_MANAGER:RegisterForEvent(WerewolfRave.NAME, EVENT_WEREWOLF_STATE_CHANGED, WerewolfRave.ChangeStyleWhenTransforming)
-EVENT_MANAGER:RegisterForEvent(WerewolfRave.NAME, EVENT_ADD_ON_LOADED, WerewolfRave.OnAddOnLoaded)
+EVENT_MANAGER:RegisterForEvent(WWR.NAME, EVENT_ADD_ON_LOADED, WWR.OnAddOnLoaded)
