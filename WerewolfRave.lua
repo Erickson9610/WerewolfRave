@@ -414,6 +414,9 @@ function WWR.ChangeStyleWhenAuto() -- Changes the active Werewolf Form Skill Sty
     -- if in combat and that is not allowed, return
     if (IsUnitInCombat("player") and WWR.enabledInCombat == false) then return end
 
+    -- if dead, return (this works when resurrecting though!)
+    if (IsUnitDead("player")) then return end
+
     -- update the frequency, which selects the correct frequency depending on combat state
     WWR.UpdateFrequency()
 
@@ -429,6 +432,9 @@ function WWR.ChangeStyleWhenTransforming()
 
     -- if in combat and that is not allowed, return
     if (IsUnitInCombat("player") and WWR.enabledInCombat == false) then return end
+
+    -- if dead, return (this works when resurrecting though!)
+    if (IsUnitDead("player")) then return end
 
     if (IsPlayerInWerewolfForm() == false) then --[[We can only change the fur color during the revert form animation, since the transform animation conflicts with the style equip.
                                                     For some reason, the EVENT_WEREWOLF_STATE_CHANGED event fires TWICE when transforming (once when the ultimate is cast, once when the animation finishes)
