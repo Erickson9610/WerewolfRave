@@ -22,7 +22,7 @@ Once you unlock a style, you will be able to add it to your Style Sequence list.
     - Randomized (`true`): Treats the Style Sequence as a list of weighted probabilities.
     - Sequential (`false`): Treats the Style Sequence as the order to iterate through.
 - Allow Changes In Combat (`/wwr combat`): If true, styles may be equipped while you are in combat.
-- Allow Disable Styles (`/wwr duplicates`): If true, styles may re-equip while already equipped, toggling them off and showing the fur color for your morph of Werewolf Transformation.
+- Force New Index (`/wwr newindex`): If true, the randomized selection mode will exclude the current index from being rolled consecutively.
 - Frequency (`/wwr frequency`): The interval in seconds between style changes in the continuous activation mode. Range is `[2, 60]`.
 - In-Combat Frequency (`/wwr cfrequency`): The interval in seconds between style changes while in combat in the continuous activation mode. Range is `[2, 60]`.
 

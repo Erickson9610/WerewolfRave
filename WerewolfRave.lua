@@ -2,16 +2,23 @@
     Add-On developed by Erickson9610
     No AI has been used in the development of this addon.
 
-    As of Update 50, these Werewolf Form Skill Styles are usable:
-    Black: 14773
-    Ashen: 14774
-    White: 14775
+    As of Update 50, the ID Table reads:
+    "Werewolf Form, Hircine's Hunter", ID: 14659
+    "Werewolf Form, Black", ID: 14773
+    "Werewolf Form, Ashen", ID: 14774
+    "Werewolf Form, White", ID: 14775
 
-    This style is in the files as well, but it is not currently available:
-    Hircine's Hunter: 14659
+    As of Update 51, the ID Table reads:
+    "Werewolf Form, Red", ID: 14659
+    "Werewolf Form, Black", ID: 14773
+    "Werewolf Form, Ashen", ID: 14774
+    "Werewolf Form, White", ID: 14775
+    "Werewolf Form, Ragefire", ID: 14814
 
-    This addon will automatically search for any Skill Styles containing "Werewolf Form" (or the equivalent for your game client language)
-    and add them to the list. It will then check to see if you have the style unlocked so it will determine if you can use it.
+    This addon does not hardcode the above IDs, as I would need to update this addon every patch new styles are added otherwise.
+
+    Instead, this addon will automatically search for any Skill Styles with the name containing "Werewolf Form" (or the equivalent for your game client language)
+    and add them to the discovered list. It will then check to see if you have the style unlocked so it will determine if you can add it to your style sequence.
 ]]
 
 WerewolfRave = WerewolfRave or {}
@@ -22,7 +29,7 @@ WWR.allowChangeWhenAuto = true -- enables or disables the automatic swap of skil
 WWR.enabledInCombat = false -- enables or disables the automatic swap of skill styles while in combat
 WWR.frequency = 3 -- the frequency of the automatic swap while not in combat
 WWR.frequencyInCombat = 10 -- the frequency of the automatic swap while in combat
-WWR.allowDisableStyle = false -- if true, you have a chance of re-equipping the same style, which disables it and shows your morph fur color instead
+WWR.randomizedPickNew = true -- in the randomized selection mode, determines if the pool of potential next indices should exclude the current index; that is, with N elements, pick from N-1, which excludes the current element
 WWR.randomized = true -- if true, the next style is randomly picked from the chosenStyleList. Otherwise, it loops through the chosenStyleList in a sequence
 WWR.currentStyleIndex = 0 -- an index into chosenStyleList which corresponds to the current style that is equipped
 WWR.currentStyleId = 0 -- the CollectibleID for the current skill style equipped
@@ -34,7 +41,7 @@ WWR.FREQUENCY_LOWER = 2 -- the lower bound for out of combat frequency (Werewolf
 WWR.FREQUENCY_UPPER = 60 -- the upper bound for out of combat frequency (WerewolfRave.frequency)
 WWR.FREQUENCY_COMBAT_LOWER = 2 -- the lower bound for in-combat frequency (WerewolfRave.frequencyInCombat)
 WWR.FREQUENCY_COMBAT_UPPER = 60 -- the upper bound for in-combat frequency (WerewolfRave.frequencyInCombat)
-WWR.VAR_VERSION = 2 -- the internal version of the saved variables. I will increment this if I restructure the data stored by this addon.
+WWR.VAR_VERSION = 3 -- the internal version of the saved variables. I will increment this if I restructure the data stored by this addon.
 
 WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES = {} -- a table that matches the name of the Werewolf Form skill styles to the game language
 WWR.SKILLSTYLE_LANGUAGE_NAME_MATCHES["en"] = "Werewolf Form"
@@ -211,17 +218,17 @@ function WWR.SetCombatFrequency(printOutput, seconds) -- Sets the in-combat freq
     end
 end
 
-function WWR.ToggleDuplicates(printOutput) -- Toggles whether styles can be toggled off by re-equipping them
-    if (WWR.allowDisableStyle) then -- toggle duplicates off
-        WWR.allowDisableStyle = false
+function WWR.ToggleForceNewIndex(printOutput) -- Toggles whether the randomized mode always picks a new index
+    if (WWR.randomizedPickNew) then -- toggle off
+        WWR.randomizedPickNew = false
         WWR.UpdateFrequency()
-        if (printOutput) then d("[WWR] Duplicates are no longer allowed!") end
-    else -- toggle duplicates on
-        WWR.allowDisableStyle = true
+        if (printOutput) then d("[WWR] Randomized mode can pick from N elements!") end
+    else -- toggle on
+        WWR.randomizedPickNew = true
         WWR.UpdateFrequency()
-        if (printOutput) then d("[WWR] Duplicates are now allowed!") end
+        if (printOutput) then d("[WWR] Randomized mode can pick from N-1 elements!") end
     end
-    WWR.savedVars.allowDisableStyle = WWR.allowDisableStyle -- save changes
+    WWR.savedVars.randomizedPickNew = WWR.randomizedPickNew -- save changes
 end
 
 function WWR.SetList(printOutput, listIndex, styleId) -- Modifies the element at a specific index, for Create, Update, and Delete functionality
@@ -284,7 +291,7 @@ function WerewolfRaveSlashCommand(parameter) -- Handles the slash commands for a
         /wwr tf
         /wwr combat
         /wwr random
-        /wwr duplicates
+        /wwr newindex
         /wwr setlist <#> <#>
         /wwr getlist
         /wwr resetlist
@@ -300,7 +307,7 @@ function WerewolfRaveSlashCommand(parameter) -- Handles the slash commands for a
         d("/wwr tf -> Toggles whether Werewolf Rave changes your style each time you revert form. Currently " .. tostring(WWR.allowChangeWhenTF))
         d("/wwr combat -> Toggles WWR to be used while in combat. Currently " .. tostring(WWR.enabledInCombat))
         d("/wwr random -> Toggles WWR to randomize the style order. Currently " .. tostring(WWR.randomized))
-        d("/wwr duplicates -> Allows WWR to toggle off the current style, showing your morph's fur color. Currently " .. tostring(WWR.allowDisableStyle))
+        d("/wwr newindex -> Toggles WWR to always pick a new index in the randomized mode. Currently " .. tostring(WWR.randomizedPickNew))
         d('/wwr setlist <index> <collectibleID> -> Manually edit the style sequence. Index can be [1, listSize+1] or "new" for new. CollectibleID corresponds to the ID of the style for that sequence position. Use "new nil" to remove the last element.')
         d("/wwr getlist -> Print the style sequence. Edit this list with /wwr setlist!")
         d("/wwr resetlist -> Resets the style sequence to the default setting.")
@@ -319,8 +326,8 @@ function WerewolfRaveSlashCommand(parameter) -- Handles the slash commands for a
         WWR.SetFrequency(true, parameterList[2])
     elseif (parameterList[1] == "cfrequency") then -- /wwr cfrequency <seconds>
         WWR.SetCombatFrequency(true, parameterList[2])
-    elseif (parameterList[1] == "duplicates") then -- /wwr duplicates
-        WWR.ToggleDuplicates(true)
+    elseif (parameterList[1] == "newindex") then -- /wwr newindex
+        WWR.ToggleForceNewIndex(true)
     elseif (parameterList[1] == "setlist") then -- /wwr setlist <index> <collectibleId>
         WWR.SetList(true, parameterList[2], parameterList[3])
     elseif (parameterList[1] == "getlist") then -- /wwr getlist
@@ -344,44 +351,46 @@ function WerewolfRaveSlashCommand(parameter) -- Handles the slash commands for a
 end
 
 function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to the sequence type. Used by ChangeStyleWhenAuto() and ChangeStyleWhenTransforming()
+    -- if the chosenStyleList only has one element, return
+    if (#WWR.chosenStyleList <= 1) then return end
+    
     -- determine the selection order
     if (WWR.randomized == true) then
-        -- randomized 
+        -- === RANDOMIZED ===
 
-        if (WWR.allowDisableStyle == true) then
-            -- if we can toggle off styles
+        -- if we can pick from N elements
+        if (WWR.randomizedPickNew == false) then
             local nextIndex = math.random(1, #WWR.chosenStyleList)
             
-            UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip style
+            -- if the next style in the sequence is the current style, do not set the style
+            if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
+                UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip the style
+            end
 
             WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
             WWR.currentStyleIndex = nextIndex
-        else
-            -- if we cannot toggle off styles
+        else -- if we can pick from N-1 elements, excluding the current style
 
-            -- can only run this path if we have 2 or more styles selected
-            if (#WWR.chosenStyleList > 1) then
             -- set the style to the last, unreachable element if we get the element we're currently using
             --[[    Presume we have a chosenStyleList with indices {1, 2, 3}. We can only roll 1 or 2.
                     If currentStyleIndex is 1 and we roll 1, change the roll to 3
                     If currentStyleIndex is 1 and we roll 2, do nothing
                     If currentStyleIndex is 3, we can roll 1 or 2 with no conflict.
                     This gives us an equal probability for all styles but the currently equipped style. ]]
-                local nextIndex = math.random(1, #WWR.chosenStyleList - 1)
-                if (nextIndex == WWR.currentStyleIndex) then
-                    nextIndex = #WWR.chosenStyleList
-                end
-                -- if the next style is not a duplicate, equip it
-                if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
-                    UseCollectible(WWR.chosenStyleList[nextIndex])
-                end
-
-                WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
-                WWR.currentStyleIndex = nextIndex
+            local nextIndex = math.random(1, #WWR.chosenStyleList - 1)
+            if (nextIndex == WWR.currentStyleIndex) then
+                nextIndex = #WWR.chosenStyleList
             end
+            -- if the next style in the sequence is the current style, do not set the style
+            if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
+                UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip the style
+            end
+
+            WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
+            WWR.currentStyleIndex = nextIndex
         end
     else
-        -- sequenced
+        -- === SEQUENCED ===
 
         --[[    Presume we have a chosenStyleList with indices {1, 2, 3}. #chosenStyleList == 3
                 nextIndex = (currentStyleIndex % #chosenStyleList) + 1
@@ -390,9 +399,10 @@ function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to t
                 If currentStyleIndex is 3, nextIndex will be 1
                 ]]
         local nextIndex = (WWR.currentStyleIndex % #WWR.chosenStyleList) + 1
-        -- if the next style in the sequence is the same style and duplicates are not allowed, do not set the style
+
+        -- if the next style in the sequence is the current style, do not set the style
         if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
-            UseCollectible(WWR.chosenStyleList[nextIndex])
+            UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip the style
         end
 
         WWR.currentStyleId = WWR.chosenStyleList[nextIndex]
@@ -405,10 +415,10 @@ function WWR.ChangeStyleWhenAuto() -- Changes the active Werewolf Form Skill Sty
     -- if player is not in Werewolf form, return
     if (IsPlayerInWerewolfForm() == false) then return end
 
-    -- if werewolf rave is disabled, return
+    -- if continuous style change is not enabled, return
     if (WWR.allowChangeWhenAuto == false) then return end
 
-    -- if there are no styles selected, return
+    -- if there are no styles in the selected list, return
     if (#WWR.chosenStyleList <= 0) then return end
 
     -- if in combat and that is not allowed, return
@@ -420,11 +430,11 @@ function WWR.ChangeStyleWhenAuto() -- Changes the active Werewolf Form Skill Sty
     -- update the frequency, which selects the correct frequency depending on combat state
     WWR.UpdateFrequency()
 
-    WWR.EquipNextStyle()
+    WWR.EquipNextStyle() -- equip a style
 end
 
 function WWR.ChangeStyleWhenTransforming()
-    -- if this functionality is not enabled, return
+    -- if style change on revert form is not enabled, return
     if (WWR.allowChangeWhenTF == false) then return end
 
     -- if there are no styles selected, return
@@ -455,7 +465,7 @@ function WWR.LoadSettings() -- set the default values and read from the saved va
         enabledInCombat = false,
         frequency = 3,
         frequencyInCombat = 10,
-        allowDisableStyle = false,
+        randomizedPickNew = true,
         randomized = true,
         allowChangeWhenTF = false
     }
@@ -473,7 +483,7 @@ function WWR.LoadSettings() -- set the default values and read from the saved va
     WWR.enabledInCombat = WWR.savedVars.enabledInCombat
     WWR.frequency = WWR.savedVars.frequency
     WWR.frequencyInCombat = WWR.savedVars.frequencyInCombat
-    WWR.allowDisableStyle = WWR.savedVars.allowDisableStyle
+    WWR.randomizedPickNew = WWR.savedVars.randomizedPickNew
     WWR.randomized = WWR.savedVars.randomized
     WWR.allowChangeWhenTF = WWR.savedVars.allowChangeWhenTF
 end

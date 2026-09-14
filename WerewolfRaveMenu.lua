@@ -30,17 +30,17 @@ function WWR.SetRandom(value)
     end
 end
 
-function WWR.GetDuplicates()
-    return WWR.savedVars.allowDisableStyle
+function WWR.GetForceNewIndex()
+    return WWR.savedVars.randomizedPickNew
 end
 
-function WWR.SetDuplicates(value)
+function WWR.SetForceNewIndex(value)
     if (value == true) then
-        WWR.allowDisableStyle = true
-        WWR.savedVars.allowDisableStyle = true
+        WWR.randomizedPickNew = true
+        WWR.savedVars.randomizedPickNew = true
     else
-        WWR.allowDisableStyle = false
-        WWR.savedVars.allowDisableStyle = false
+        WWR.randomizedPickNew = false
+        WWR.savedVars.randomizedPickNew = false
     end
 end
 
@@ -268,19 +268,22 @@ function WWR.InitializeMenu()
             },
             {
                 type = "checkbox",
-                name = "Allow styles to be toggled off",
-                tooltip = "If the equipped style is slated to be selected again, this setting will allow the style to be re-equipped, which unequips it and shows your morph's fur color underneath.",
+                name = "Force new random index",
+                tooltip = "Forces the next index selected in the randomized mode to be a new index, picking from N-1 elements rather than from all N elements of your style sequence.",
                 getFunc = function()
-                    return WWR.GetDuplicates()
+                    return WWR.GetForceNewIndex()
                 end,
                 setFunc = function(value)
-                    WWR.SetDuplicates(value)
+                    WWR.SetForceNewIndex(value)
+                end,
+                disabled = function() 
+                    return (not WWR.randomized)
                 end
             },
             {
                 type = "slider",
                 name = "Frequency",
-                tooltip = "Determines the out-of-combat interval between style changes in seconds.",
+                tooltip = "Determines the out-of-combat interval between style changes in seconds in the continuous mode.",
                 getFunc = function()
                     return WWR.GetFrequency()
                 end,
@@ -296,7 +299,7 @@ function WWR.InitializeMenu()
             {
                 type = "slider",
                 name = "Frequency (in combat)",
-                tooltip = "Determines the in-combat interval between style changes in seconds.",
+                tooltip = "Determines the in-combat interval between style changes in seconds in the continuous mode.",
                 getFunc = function()
                     return WWR.GetCombatFrequency()
                 end,
