@@ -25,7 +25,7 @@ WerewolfRave = WerewolfRave or {}
 local WWR = WerewolfRave or {}
 WWR.discoveredStyleList = {} -- the list of discovered Werewolf Form styles, used for display of all possible styles to choose from, equippable or not
 WWR.chosenStyleList = {} -- the list of chosen Werewolf Form styles, used for randomizing and sequencing. These are the styles that the user wants to use and can equip
-WWR.allowChangeWhenAuto = true -- enables or disables the automatic swap of skill styles
+WWR.allowChangeWhenAuto = true -- enables or disables the continuous swap of skill styles while transformed
 WWR.enabledInCombat = false -- enables or disables the automatic swap of skill styles while in combat
 WWR.frequency = 3 -- the frequency of the automatic swap while not in combat
 WWR.frequencyInCombat = 10 -- the frequency of the automatic swap while in combat
@@ -33,7 +33,7 @@ WWR.randomizedPickNew = true -- in the randomized selection mode, determines if 
 WWR.randomized = true -- if true, the next style is randomly picked from the chosenStyleList. Otherwise, it loops through the chosenStyleList in a sequence
 WWR.currentStyleIndex = 0 -- an index into chosenStyleList which corresponds to the current style that is equipped
 WWR.currentStyleId = 0 -- the CollectibleID for the current skill style equipped
-WWR.allowChangeWhenTF = false -- changes your fur style whenever you revert form
+WWR.allowChangeWhenTF = false -- enables or disables the change of your fur style whenever you revert form
 
 -- constants
 WWR.NAME = "WerewolfRave"
@@ -121,6 +121,7 @@ end
 
 function WWR.UpdateFrequency() -- Determines whether the player is in combat, then registers the refresh to happen according to the corresponding frequency value.
     EVENT_MANAGER:UnregisterForUpdate(WWR.NAME .. "Loop")
+    if (WWR.allowChangeWhenAuto == false) then return end -- if auto is disabled, return early
     if (IsUnitInCombat("player")) then
         -- use in-combat frequency
         EVENT_MANAGER:RegisterForUpdate(WWR.NAME .. "Loop", WWR.frequencyInCombat * 1000, function() WWR.ChangeStyleWhenAuto() end)
@@ -133,6 +134,7 @@ end
 function WWR.ToggleAuto(printOutput) -- Toggles the automatic mode on or off
     if (WWR.allowChangeWhenAuto) then -- disable wwr
         WWR.allowChangeWhenAuto = false
+        EVENT_MANAGER:UnregisterForUpdate(WWR.NAME .. "Loop") -- unregister for update when auto is disabled, so this doesn't continually run in the background
         if (printOutput) then d("[WWR] Automatic style change disabled!") end
     else -- enable wwr
         WWR.allowChangeWhenAuto = true
@@ -361,6 +363,7 @@ function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to t
         -- if we can pick from N elements
         if (WWR.randomizedPickNew == false) then
             local nextIndex = math.random(1, #WWR.chosenStyleList)
+            if (IsCollectibleUsable(WWR.chosenStyleList[nextIndex]) == false) then return end -- return if this collectible cannot be used
             
             -- if the next style in the sequence is the current style, do not set the style
             if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
@@ -381,6 +384,8 @@ function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to t
             if (nextIndex == WWR.currentStyleIndex) then
                 nextIndex = #WWR.chosenStyleList
             end
+            if (IsCollectibleUsable(WWR.chosenStyleList[nextIndex]) == false) then return end -- return if this collectible cannot be used
+
             -- if the next style in the sequence is the current style, do not set the style
             if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
                 UseCollectible(WWR.chosenStyleList[nextIndex]) -- equip the style
@@ -399,6 +404,7 @@ function WWR.EquipNextStyle() -- Changes the equipped Skill Style according to t
                 If currentStyleIndex is 3, nextIndex will be 1
                 ]]
         local nextIndex = (WWR.currentStyleIndex % #WWR.chosenStyleList) + 1
+        if (IsCollectibleUsable(WWR.chosenStyleList[nextIndex]) == false) then return end -- return if this collectible cannot be used
 
         -- if the next style in the sequence is the current style, do not set the style
         if (WWR.currentStyleId ~= WWR.chosenStyleList[nextIndex]) then
