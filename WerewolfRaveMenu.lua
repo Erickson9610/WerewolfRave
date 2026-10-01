@@ -56,6 +56,7 @@ function WWR.SetAuto(value)
         WWR.allowChangeWhenAuto = false
         WWR.savedVars.allowChangeWhenAuto = false
     end
+    WWR.UpdateFrequency() -- update the frequency, which also registers or unregisters the continuous update
 end
 
 function WWR.GetTF()

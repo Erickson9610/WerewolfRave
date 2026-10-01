@@ -134,14 +134,13 @@ end
 function WWR.ToggleAuto(printOutput) -- Toggles the automatic mode on or off
     if (WWR.allowChangeWhenAuto) then -- disable wwr
         WWR.allowChangeWhenAuto = false
-        EVENT_MANAGER:UnregisterForUpdate(WWR.NAME .. "Loop") -- unregister for update when auto is disabled, so this doesn't continually run in the background
         if (printOutput) then d("[WWR] Automatic style change disabled!") end
     else -- enable wwr
         WWR.allowChangeWhenAuto = true
-        WWR.UpdateFrequency()
         if (printOutput) then d("[WWR] Automatic style change enabled!") end
     end
     WWR.savedVars.allowChangeWhenAuto = WWR.allowChangeWhenAuto -- save changes
+    WWR.UpdateFrequency() -- update the frequency, which also registers or unregisters the continuous update
 end
 
 function WWR.ToggleTF(printOutput) -- Toggles transformation as a trigger for changing styles
